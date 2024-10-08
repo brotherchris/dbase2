@@ -244,52 +244,67 @@ $('th').on('click', function(event) {
     }
 });
 
-    $('#jobTableBody').on('blur', '[contenteditable="true"], select', function() {
-        const jobId = $(this).data('id');
-        const column = $(this).data('column');
-        let newValue = $(this).is('select') ? $(this).val() : $(this).text().trim();
-    
-        // Format the date to 'YYYY-MM-DD' if it's a date field
-        if (column === 'sign_off_date') {
-            const dateParts = newValue.split('/');
-            if (dateParts.length === 3) {
-                newValue = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;  // Convert to 'YYYY-MM-DD'
-            }
+$('#jobTableBody').on('focus', '[contenteditable="true"], select', function() {
+    // Capture the original value of the cell on focus
+    let originalValue = $(this).is('select') ? $(this).val() : $(this).text().trim();
+    $(this).data('original-value', originalValue);  // Store it in a data attribute for later comparison
+    console.log(`Debug: Original Value set for Job ID: ${$(this).data('id')}, Column: ${$(this).data('column')}, Value: "${originalValue}"`);
+});
+
+$('#jobTableBody').on('blur', '[contenteditable="true"], select', function() {
+    const jobId = $(this).data('id');
+    const column = $(this).data('column');
+    let newValue = $(this).is('select') ? $(this).val() : $(this).text().trim();  // Get the updated value
+    const originalValue = $(this).data('original-value');  // Retrieve the original value from the data attribute
+
+    // If the value hasn't changed, do not send the request or show the toast
+    if (newValue === originalValue) {
+        console.log(`Debug: No change detected. Skipping update for Job ID: ${jobId}, Column: ${column}.`);
+        return;  // Exit the handler if no change is detected
+    }
+
+    // Format the date to 'YYYY-MM-DD' if it's a date field before sending the update
+    if (column === 'sign_off_date') {
+        const dateParts = newValue.split('/');
+        if (dateParts.length === 3) {
+            newValue = `${dateParts[2]}-${dateParts[0].padStart(2, '0')}-${dateParts[1].padStart(2, '0')}`;
         }
-    
-        console.log(`Debug: Updating job ID: ${jobId}, Column: ${column}, New Value: ${newValue}`);
-    
-        $.ajax({
-            url: '/api/single_update',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ job_id: jobId, field: column, value: newValue }),
-            success: function(response) {
-                console.log(`Debug: Update Response: ${JSON.stringify(response)}`);
-                Toastify({
-                    text: "Update successful!",
-                    duration: 3000,
-                    close: true,
-                    gravity: "top",
-                    position: "right",
-                    style: {
-                        background: "linear-gradient(to right, #00b09b, #96c93d)",
-                    },
-                }).showToast();
-    
-                // Automatically update the sign-off date in the table if the 'sign_off_name' field is changed
-                if (column === 'sign_off_name') {
-                    const todayDate = new Date().toLocaleDateString('en-CA');  // 'en-CA' format: YYYY-MM-DD
-                    $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(todayDate);  // Update the sign-off date cell
-                }
-            },
-            error: function(error) {
-                console.log(`Debug: Update Error: ${JSON.stringify(error)}`);
-                alert('Error updating job. Please try again.');
+    }
+
+    console.log(`Debug: Sending update for Job ID ${jobId}, Column: ${column}, New Value: "${newValue}"`);
+
+    $.ajax({
+        url: '/api/single_update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ job_id: jobId, field: column, value: newValue }),
+        success: function(response) {
+            console.log(`Debug: Update Response: ${JSON.stringify(response)}`);
+            
+            // Show toast notification only if there is a true update
+            Toastify({
+                text: "Update successful!",
+                duration: 3000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: "linear-gradient(to right, #00b09b, #96c93d)",
+                },
+            }).showToast();
+
+            // Automatically update the sign-off date in the table if the 'sign_off_name' field is changed
+            if (column === 'sign_off_name') {
+                const todayDate = new Date().toLocaleDateString('en-CA');  // 'en-CA' format: YYYY-MM-DD
+                $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(todayDate);  // Update the sign-off date cell
             }
-        });
+        },
+        error: function(error) {
+            console.log(`Debug: Update Error: ${JSON.stringify(error)}`);
+            alert('Error updating job. Please try again.');
+        }
     });
-    
+});
 
 
     // Mass Update Functionality
@@ -485,47 +500,7 @@ $(document).ready(function() {
         document.body.removeChild(downloadLink);  // Clean up the link element after download
     });
 });
-$(document).ready(function() {
-    // Event listener for single cell updates
-    $('#jobTableBody').on('blur', '[contenteditable="true"]', function() {
-        const jobId = $(this).data('id');
-        const column = $(this).data('column');
-        const newValue = $(this).text().trim();
 
-        // Send an AJAX request to update the database
-        $.ajax({
-            url: '/api/single_update',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ job_id: jobId, field: column, value: newValue }),
-            success: function(response) {
-                console.log("Update successful for job:", jobId);
-                
-                // Automatically update the sign-off date if the 'sign_off_name' field is changed
-                if (column === 'sign_off_name') {
-                    const todayDate = new Date().toLocaleDateString();  // Get today's date in local format
-                    $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(todayDate);
 
-                    // Optionally send an additional request to update the sign-off date in the database
-                    $.ajax({
-                        url: '/api/single_update',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({ job_id: jobId, field: 'sign_off_date', value: todayDate }),
-                        success: function(response) {
-                            console.log("Sign-off date updated for job:", jobId);
-                        },
-                        error: function(error) {
-                            console.error('Error updating sign-off date:', error);
-                        }
-                    });
-                }
-            },
-            error: function(error) {
-                console.error('Error updating job:', error);
-                alert('Error updating job. Please try again.');
-            }
-        });
-    });
-});
+
 
