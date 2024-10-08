@@ -307,93 +307,142 @@ $('#jobTableBody').on('blur', '[contenteditable="true"], select', function() {
 });
 
 
-    // Mass Update Functionality
-    $('#massUpdateButton').on('click', function() {
-        const field = $('#massUpdateField').val();
-        const newValue = $('#massUpdateValue').val();
-        const selectedIds = $('.rowCheckbox:checked').map(function() {
-            return $(this).data('id');
-        }).get();
+$('#massUpdateButton').on('click', function() {
+    const field = $('#massUpdateField').val();
+    const newValue = $('#massUpdateValue').val();
+    const selectedIds = $('.rowCheckbox:checked').map(function() {
+        return $(this).data('id');
+    }).get();
 
-        // Store original values before the update
-        const originalData = [];
-        selectedIds.forEach(jobId => {
-            const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
-            const originalValue = cell.is('select') ? cell.find('option:selected').text() : cell.text();
-            originalData.push({ job_id: jobId, field: field, original_value: originalValue });
-        });
+    // Store original values before the update for potential undo
+    const originalData = [];
+    selectedIds.forEach(jobId => {
+        const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
+        const originalValue = cell.is('select') ? cell.find('option:selected').text() : cell.text();
+        originalData.push({ job_id: jobId, field: field, original_value: originalValue });
+    });
 
-        if (selectedIds.length === 0) {
-            alert('Please select at least one row to update.');
-            return;
-        }
+    if (selectedIds.length === 0) {
+        alert('Please select at least one row to update.');
+        return;
+    }
 
+    $.ajax({
+        url: '/api/mass_update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ field: field, value: newValue, selected_ids: selectedIds }),
+        success: function(response) {
+            let undoTimeout;  // Variable to hold the undo timer
 
-        $.ajax({
-            url: '/api/mass_update',
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({ field: field, value: newValue, selected_ids: selectedIds }),
-            success: function(response) {
+            Toastify({
+                text: "Mass update successful! Click to undo.",
+                duration: 15000,  // 15-second notification
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: "linear-gradient(to right, #00b09b, #96c93d)",
+                },
+                onClick: function() {
+                    clearTimeout(undoTimeout);  // Cancel the timeout if user clicks undo
+
+                    $.ajax({
+                        url: '/api/undo_mass_update',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(originalData),
+                        success: function() {
+                            Toastify({
+                                text: "Mass update undone!",
+                                duration: 3000,
+                                close: true,
+                                gravity: "top",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(to right, #f44336, #ff7961)",  // Red for undo confirmation
+                                },
+                            }).showToast();
+
+                            // Restore the table values based on original data
+                            originalData.forEach(data => {
+                                const cell = $(`td[data-column="${data.field}"][data-id="${data.job_id}"]`);
+                                cell.text(data.original_value);
+                            });
+                        },
+                        error: function() {
+                            alert('Failed to undo the mass update.');
+                        }
+                    });
+                }
+            }).showToast();
+
+            // Start a 15-second timer for automatic finalization
+            undoTimeout = setTimeout(function() {
                 Toastify({
-                    text: "Mass update successful!",
+                    text: "Mass update finalized.",
                     duration: 3000,
                     close: true,
                     gravity: "top",
                     position: "right",
-                    stopOnFocus: true,
                     style: {
-                        background: "linear-gradient(to right, #00b09b, #96c93d)",
+                        background: "linear-gradient(to right, #00796b, #004d40)",  // Confirm color
                     },
-                    onClick: function() {}
                 }).showToast();
+            }, 15000);
 
-                // Update the table with the new values
-                selectedIds.forEach(jobId => {
-                    const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
-                    if (cell.is('select')) {
-                        cell.val(newValue);
-                    } else {
-                        cell.text(newValue);
-                    }
+            // Update the table with the new values
+            selectedIds.forEach(jobId => {
+                const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
+                if (cell.is('select')) {
+                    cell.val(newValue);
+                } else {
+                    cell.text(newValue);
+                }
 
-                    // Update sign-off date if sign-off name was changed
-                    if (field === 'sign_off_name') {
-                        $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(new Date().toLocaleDateString());
-                    }
-                });
-            },
-            error: function(error) {
-                console.error('Error during mass update:', error);
-                alert('Error during mass update. Please try again.');
-
-                // Revert the changes in case of an error
-                $.ajax({
-                    url: '/api/undo_mass_update',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify(originalData),
-                    error: function(undoError) {
-                        console.error('Error undoing mass update:', undoError);
-                        alert('An error occurred while trying to undo the changes. Please refresh the page.');
-                    }
-                });
-            }
-        });
+                // Update sign-off date if sign-off name was changed
+                if (field === 'sign_off_name') {
+                    $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(new Date().toLocaleDateString());
+                }
+            });
+        },
+        error: function(error) {
+            console.error('Error during mass update:', error);
+            alert('Error during mass update. Please try again.');
+        }
     });
+});
 
-    // Select All Functionality
-    $('#selectAll').on('change', function() {
-        $('.rowCheckbox').prop('checked', this.checked);
-        toggleHighlight(); // Highlight/unhighlight rows based on checkbox state
-    });
 
-    // Individual checkbox change listener
-    $('#jobTableBody').on('change', '.rowCheckbox', function() {
-        toggleHighlight(); // Highlight/unhighlight the row
-        // Check if all checkboxes are checked and update the "Select All" checkbox accordingly
-        $('#selectAll').prop('checked', $('.rowCheckbox').length === $('.rowCheckbox:checked').length);
+// Select All Functionality
+$('#selectAll').on('change', function() {
+    // Select only checkboxes in visible rows
+    const isChecked = $(this).is(':checked');
+    $('#jobTableBody tr:visible .rowCheckbox').prop('checked', isChecked);
+    toggleHighlight(); // Highlight/unhighlight rows based on checkbox state
+});
+
+// Individual checkbox change listener for visible rows
+$('#jobTableBody').on('change', '.rowCheckbox', function() {
+    toggleHighlight(); // Highlight/unhighlight the row
+
+    // Update the "Select All" checkbox based on visible rows
+    const totalVisible = $('#jobTableBody tr:visible .rowCheckbox').length;
+    const totalChecked = $('#jobTableBody tr:visible .rowCheckbox:checked').length;
+    $('#selectAll').prop('checked', totalVisible === totalChecked);
+});
+
+// Function to toggle highlight class on rows based on checkbox state
+function toggleHighlight() {
+    $('#jobTableBody tr:visible .rowCheckbox').each(function() {
+        const row = $(this).closest('tr');
+        if ($(this).is(':checked')) {
+            row.addClass('highlight');
+        } else {
+            row.removeClass('highlight');
+        }
     });
+}
 
     // Function to toggle highlight class on rows based on checkbox state
     function toggleHighlight() {
