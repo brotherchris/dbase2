@@ -318,18 +318,18 @@ def get_filtered_data():
     filters = request.json
     query = Job.query
 
-    if filters['jobName']:
-        query = query.filter(Job.job_name.ilike(f"%{filters['jobName']}%"))
-    if filters['espAppName']:
-        query = query.filter(Job.esp_app_name.ilike(f"%{filters['espAppName']}%"))
-    if filters['lastRunDate']:
-        query = query.filter(Job.last_run_date.ilike(f"%{filters['lastRunDate']}%"))
-    if filters['prefix']:
-        query = query.filter(Job.prefix.ilike(f"%{filters['prefix']}%"))
-    if filters['type']:
-        query = query.filter(Job.type.ilike(f"%{filters['type']}%"))
-    if filters['comments']:
-        query = query.filter(Job.comments.ilike(f"%{filters['comments']}%"))
+  #  if filters['jobName']:
+  #      query = query.filter(Job.job_name.ilike(f"%{filters['jobName']}%"))
+  #  if filters['espAppName']:
+  #      query = query.filter(Job.esp_app_name.ilike(f"%{filters['espAppName']}%"))
+  #  if filters['lastRunDate']:
+  #      query = query.filter(Job.last_run_date.ilike(f"%{filters['lastRunDate']}%"))
+  #  if filters['prefix']:
+  #      query = query.filter(Job.prefix.ilike(f"%{filters['prefix']}%"))
+  #  if filters['type']:
+  #      query = query.filter(Job.type.ilike(f"%{filters['type']}%"))
+  #  if filters['comments']:
+  #      query = query.filter(Job.comments.ilike(f"%{filters['comments']}%"))
 
     filtered_data = query.all()
 

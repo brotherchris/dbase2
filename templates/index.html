@@ -9,22 +9,21 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="/static/js/app.js"></script>
-
 </head>
 <body>
     <h1>Job Ownership Tracking</h1>
-<!-- Download Button in the Top Right Corner -->
-<div style="text-align: right; margin: 10px;">
-    <button id="downloadCsvButton" class="export-btn">Download CSV</button>
-</div>
-    <!-- Company Selection -->
+    <div style="text-align: right; margin: 10px;">
+        <button id="downloadCsvButton" class="export-btn">Download CSV</button>
+    </div>
+    
     <div class="company-filter">
         <label for="companySelect">Filter by Company:</label>
         <select id="companySelect">
             <option value="">All Companies</option>
         </select>
-        <!-- Toast Notification -->
+        
         <div id="updateToast" class="toast">Update Complete!</div>
+        
         <div class="mass-update">
             <label for="massUpdateField">Select Field to Update:</label>
             <select id="massUpdateField">
@@ -62,28 +61,26 @@
                 <th data-column="job_owner">Job Owner Email <span class="sort-icon">⇅</span><input type="text" id="filterJobOwner" placeholder="Filter Job Owner"></th>
                 <th data-column="troux_name">Associated Application Name (Troux Name) <span class="sort-icon">⇅</span><input type="text" id="filterTrouxName" placeholder="Filter Associated App"></th>
                 <th data-column="troux_id">Troux ID <span class="sort-icon">⇅</span><input type="text" id="filterTrouxId" placeholder="Filter Troux ID"></th>
-                <th data-column="status">Job Status <span class="sort-icon">⇅</span><input type="text" id="filterStatus" placeholder="Filter Job Status"></th>
-                <th data-column="impact">Business Impact <span class="sort-icon">⇅</span><input type="text" id="filterImpact" placeholder="Filter Impact"></th>
-                <th data-column="complexity">Job Complexity <span class="sort-icon">⇅</span><input type="text" id="filterComplexity" placeholder="Filter Complexity"></th>
+                
+                <!-- Dropdown columns headers -->
+                <th data-column="status">Job Status <span class="sort-icon">⇅</span><select id="filterStatus"><option value="">All</option><option value="Active">Active</option><option value="Inactive">Inactive</option></select></th>
+                <th data-column="impact">Business Impact <span class="sort-icon">⇅</span><select id="filterImpact"><option value="">All</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select></th>
+                <th data-column="complexity">Job Complexity <span class="sort-icon">⇅</span><select id="filterComplexity"><option value="">All</option><option value="Low">Low</option><option value="Medium">Medium</option><option value="High">High</option></select></th>
+
                 <th data-column="remarks">Comments <span class="sort-icon">⇅</span><input type="text" id="filterRemarks" placeholder="Filter Comments"></th>
                 <th data-column="sign_off_name">Name of Person Signing Off <span class="sort-icon">⇅</span><input type="text" id="filterSignOffName" placeholder="Filter Sign Off"></th>
                 <th data-column="sign_off_date">Sign-off Date <span class="sort-icon">⇅</span><input type="text" id="filterSignOffDate" placeholder="Filter Sign-off Date"></th>
                 <th data-column="target_week">Target Migration Week <span class="sort-icon">⇅</span><input type="text" id="filterTargetWeek" placeholder="Filter Target Week"></th>
             </tr>
         </thead>
-        
 
         <tbody id="jobTableBody">
             <!-- Job rows will be appended here via JavaScript -->
         </tbody>
     </table>
 
-    <!-- Footer for displaying row count -->
     <div id="footer" class="footer">
         Total Jobs: <span id="rowCount">0</span>
     </div>
-
-
-    
 </body>
 </html>

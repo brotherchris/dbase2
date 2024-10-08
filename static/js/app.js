@@ -1,62 +1,148 @@
+function getColumnIndex(columnName) {
+    const columnMap = {
+        'id': 0,
+        'job': 1,
+        'esp_app_name': 2,
+        'last_run': 3,
+        'prefix': 4,
+        'type': 5,
+        'remedy_support_group': 6,
+        'snow_support_group': 7,
+        'snow_support_group_mgr': 8,
+        'support_market': 9,
+        'app_name': 10,
+        'ldap_group': 11,
+        'env': 12,
+        'purpose': 13,
+        'job_owner': 14,
+        'troux_name': 15,
+        'troux_id': 16,
+        'status': 17,  // Dropdown column
+        'impact': 18,  // Dropdown column
+        'complexity': 19,  // Dropdown column
+        'remarks': 20,
+        'sign_off_name': 21,
+        'sign_off_date': 22,
+        'target_week': 23
+    };
+
+    // Return the column index or -1 if the column name doesn't exist
+    return columnMap[columnName] || -1;
+}
+
 $(document).ready(function() {
   let currentPage = 1; 
   let totalCount = 0;  
   let loading = false; 
   let hasTotalCountDisplayed = false; 
 
-  function loadJobs(page = 1, company = '') {
-      if (loading) return; 
-      loading = true;
-  
+// Define dropdown options for specific columns
+const dropdownOptions = {
+    'job_status': ['Active', 'Inactive'],
+    'business_impact': ['Low', 'Medium', 'High'],
+    'job_complexity': ['Low', 'Medium', 'High']
+};
 
-      $.get(`/api/jobs?page=${page}&limit=20&company=${encodeURIComponent(company)}`, function(response) {
-          let jobs = response.jobs;  
-          
-          if (!hasTotalCountDisplayed || company) {
-              totalCount = response.total_count; 
-              $('#rowCount').text(`Total Jobs: ${totalCount}`);  
-              hasTotalCountDisplayed = true; 
-          }
 
-          let tableBody = $('#jobTableBody');
-  
-          jobs.forEach(function(job) {
-              let row = `
-                  <tr>
-            <td><input type="checkbox" class="rowCheckbox" data-id="${job.id}"></td>
-            <td>${job.job}</td>
-            <td>${job.event}</td>
-            <td>${job.last_run}</td>
-            <td>${job.prefix}</td>
-            <td>${job.type}</td>
-            <td>${job.remedy_support_group}</td>
-            <td>${job.snow_support_group}</td>
-            <td>${job.snow_support_group_mgr}</td>
-            <td>${job.support_market}</td>
-            <td>${job.app_name}</td>
-            <td>${job.ldap_group}</td>
-            <td>${job.env}</td>
-            <td>${job.purpose}</td>
-            <td contenteditable="true" data-column="job_owner" data-id="${job.id}">${job.job_owner}</td>
-            <td contenteditable="true" data-column="troux_name" data-id="${job.id}">${job.troux_name}</td>
-            <td contenteditable="true" data-column="troux_id" data-id="${job.id}">${job.troux_id}</td>
-            <td>${job.status}</td> 
-            <td>${job.impact}</td> 
-            <td>${job.complexity}</td> 
-            <td contenteditable="true" data-column="remarks" data-id="${job.id}">${job.remarks}</td>
-            <td contenteditable="true" data-column="sign_off_name" data-id="${job.id}">${job.sign_off_name}</td>
-            <td>${job.sign_off_date}</td>
-            <td contenteditable="true" data-column="target_week" data-id="${job.id}">${job.target_week}</td>
-        </tr>
-                  </tr>
-              `;
-              tableBody.append(row);
-          });
 
-          currentPage += 1; 
-          loading = false; 
-      });
-  }
+// Function to load jobs and render the table with dropdowns for specified columns
+function loadJobs(page = 1, company = '') {
+    if (loading) return;
+    loading = true;
+
+    $.get(`/api/jobs?page=${page}&limit=20&company=${encodeURIComponent(company)}`, function(response) {
+        let jobs = response.jobs;
+
+        if (!hasTotalCountDisplayed || company) {
+            totalCount = response.total_count;
+            $('#rowCount').text(`Total Jobs: ${totalCount}`);
+            hasTotalCountDisplayed = true;
+        }
+
+        let tableBody = $('#jobTableBody');
+        jobs.forEach(function(job) {
+            let row = `
+                <tr>
+                    <td><input type="checkbox" class="rowCheckbox" data-id="${job.id}"></td>
+                    <td>${job.job}</td>
+                    <td>${job.event}</td>
+                    <td>${job.last_run}</td>
+                    <td>${job.prefix}</td>
+                    <td>${job.type}</td>
+                    <td>${job.remedy_support_group}</td>
+                    <td>${job.snow_support_group}</td>
+                    <td>${job.snow_support_group_mgr}</td>
+                    <td>${job.support_market}</td>
+                    <td>${job.app_name}</td>
+                    <td>${job.ldap_group}</td>
+                    <td>${job.env}</td>
+                    <td>${job.purpose}</td>
+                    <td contenteditable="true" data-column="job_owner" data-id="${job.id}">${job.job_owner}</td>
+                    <td contenteditable="true" data-column="troux_name" data-id="${job.id}">${job.troux_name}</td>
+                    <td contenteditable="true" data-column="troux_id" data-id="${job.id}">${job.troux_id}</td>
+                    <td>
+                        <select class="dropdown" contenteditable="true" data-column="status" data-id="${job.id}">
+                            ${dropdownOptions['job_status'].map(option => `<option value="${option}" ${option === job.status ? 'selected' : ''}>${option}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="dropdown" contenteditable="true" data-column="impact" data-id="${job.id}">
+                            ${dropdownOptions['business_impact'].map(option => `<option value="${option}" ${option === job.impact ? 'selected' : ''}>${option}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="dropdown" contenteditable="true" data-column="complexity" data-id="${job.id}">
+                            ${dropdownOptions['job_complexity'].map(option => `<option value="${option}" ${option === job.complexity ? 'selected' : ''}>${option}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td contenteditable="true" data-column="remarks" data-id="${job.id}">${job.remarks}</td>
+                    <td contenteditable="true" data-column="sign_off_name" data-id="${job.id}">${job.sign_off_name}</td>
+                    <td>${job.sign_off_date}</td>
+                    <td contenteditable="true" data-column="target_week" data-id="${job.id}">${job.target_week}</td>
+                </tr>
+            `;
+            tableBody.append(row);
+        });
+
+        currentPage += 1;
+        loading = false;
+    });
+}
+
+// Handle dropdown change events for specific columns
+$('#jobTableBody').on('change', '.dropdown', function() {
+    const jobId = $(this).data('id');
+    const column = $(this).data('column');
+    const newValue = $(this).val();
+
+    console.log(`Debug: Updating Job ID: ${jobId}, Column: ${column}, New Value: ${newValue}`);
+
+    // Send the update to the backend
+    $.ajax({
+        url: '/api/single_update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ job_id: jobId, field: column, value: newValue }),
+        success: function(response) {
+            console.log(`Debug: Update successful for Job ID ${jobId}, Column: ${column}`);
+            Toastify({
+                text: "Update successful!",
+                duration: 3000,
+                close: true,
+                gravity: "top",
+                position: "right",
+                style: {
+                    background: "linear-gradient(to right, #00b09b, #96c93d)",
+                },
+            }).showToast();
+        },
+        error: function(error) {
+            console.log(`Error updating Job ID ${jobId}:`, error);
+            alert('Error updating job. Please try again.');
+        }
+    });
+});
+
 
   $(window).on('scroll', function() {
       if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
@@ -98,49 +184,57 @@ function debounce(func, delay) {
 
 function applyFilters() {
     const filters = {
-        jobName: $('#filterJobName').val().trim().toLowerCase(),
-        espAppName: $('#filterESPAppName').val().trim().toLowerCase(),
-        lastRunDate: $('#filterLastRun').val().trim().toLowerCase(),
+        job: $('#filterJobName').val().trim().toLowerCase(),
+        esp_app_name: $('#filterESPAppName').val().trim().toLowerCase(),
+        last_run: $('#filterLastRun').val().trim().toLowerCase(),
         prefix: $('#filterPrefix').val().trim().toLowerCase(),
         type: $('#filterType').val().trim().toLowerCase(),
-        remedyGroup: $('#filterRemedyGroup').val().trim().toLowerCase(),
-        snowGroup: $('#filterSnowGroup').val().trim().toLowerCase(),
-        snowMgr: $('#filterSnowMgr').val().trim().toLowerCase(),
-        market: $('#filterMarket').val().trim().toLowerCase(),
-        appName: $('#filterAppName').val().trim().toLowerCase(),
-        ldap: $('#filterLDAP').val().trim().toLowerCase(),
+        remedy_support_group: $('#filterRemedyGroup').val().trim().toLowerCase(),
+        snow_support_group: $('#filterSnowGroup').val().trim().toLowerCase(),
+        snow_support_group_mgr: $('#filterSnowMgr').val().trim().toLowerCase(),
+        support_market: $('#filterMarket').val().trim().toLowerCase(),
+        app_name: $('#filterAppName').val().trim().toLowerCase(),
+        ldap_group: $('#filterLDAP').val().trim().toLowerCase(),
         env: $('#filterEnv').val().trim().toLowerCase(),
         purpose: $('#filterPurpose').val().trim().toLowerCase(),
-        jobOwner: $('#filterJobOwner').val().trim().toLowerCase(),
-        trouxName: $('#filterTrouxName').val().trim().toLowerCase(),
-        trouxId: $('#filterTrouxId').val().trim().toLowerCase(),
+        job_owner: $('#filterJobOwner').val().trim().toLowerCase(),
+        troux_name: $('#filterTrouxName').val().trim().toLowerCase(),
+        troux_id: $('#filterTrouxId').val().trim().toLowerCase(),
         status: $('#filterStatus').val().trim().toLowerCase(),
         impact: $('#filterImpact').val().trim().toLowerCase(),
         complexity: $('#filterComplexity').val().trim().toLowerCase(),
         remarks: $('#filterRemarks').val().trim().toLowerCase(),
-        signOffName: $('#filterSignOffName').val().trim().toLowerCase(),
-        signOffDate: $('#filterSignOffDate').val().trim().toLowerCase(),
-        targetWeek: $('#filterTargetWeek').val().trim().toLowerCase()
+        sign_off_name: $('#filterSignOffName').val().trim().toLowerCase(),
+        sign_off_date: $('#filterSignOffDate').val().trim().toLowerCase(),
+        target_week: $('#filterTargetWeek').val().trim().toLowerCase()
     };
 
-    let visibleRowCount = 0;  // Initialize a counter for visible rows
+    let visibleRowCount = 0;
 
     $('#jobTableBody tr').each(function() {
         let row = $(this);
         let showRow = true;
 
         for (let filter in filters) {
-            if (filters[filter] && !row.find('td:eq(' + getColumnIndex(filter) + ')').text().toLowerCase().includes(filters[filter])) {
+            let columnIndex = getColumnIndex(filter);  // Get the index of the column for this filter
+            let cellValue;
+
+            // Special handling for dropdown columns
+            if (['status', 'impact', 'complexity'].includes(filter)) {
+                cellValue = row.find(`td:eq(${columnIndex}) select option:selected`).text().toLowerCase();
+            } else {
+                cellValue = row.find('td').eq(columnIndex).text().toLowerCase();
+            }
+
+            // If the filter has a value and it does not match, hide the row
+            if (filters[filter] && !cellValue.includes(filters[filter])) {
                 showRow = false;
                 break;
             }
         }
 
         row.toggle(showRow);  // Show or hide the row based on filter matching
-
-        if (showRow) {
-            visibleRowCount++;  // Increment the counter if the row is visible
-        }
+        if (showRow) visibleRowCount++;
     });
 
     // Update the row count based on the visible rows
@@ -148,37 +242,9 @@ function applyFilters() {
 }
 
 
-function getColumnIndex(filterName) {
-  const columnMap = {
-      jobName: 1,
-      espAppName: 2,
-      lastRunDate: 3,
-      prefix: 4,
-      type: 5,
-      remedyGroup: 6,
-      snowGroup: 7,
-      snowMgr: 8,
-      market: 9,
-      appName: 10,
-      ldap: 11,
-      env: 12,
-      purpose: 13,
-      jobOwner: 14,
-      trouxName: 15,
-      trouxId: 16,
-      status: 17,
-      impact: 18,
-      complexity: 19,
-      remarks: 20,
-      signOffName: 21,
-      signOffDate: 22,
-      targetWeek: 23
-  };
-  return columnMap[filterName] || -1; // Return -1 if filterName is not found
-}
 
 $('#filterJobName, #filterESPAppName, #filterLastRun, #filterPrefix, #filterType, #filterRemedyGroup, #filterSnowGroup, #filterSnowMgr, #filterMarket, #filterAppName, #filterLDAP, #filterEnv,#filterPurpose, #filterJobOwner, #filterTrouxName, #filterTrouxId, #filterStatus, #filterImpact, #filterComplexity, #filterRemarks, #filterSignOffName, #filterSignOffDate, #filterTargetWeek')
-    .on('input', debounce(applyFilters, 300)); 
+    .on('input change', debounce(applyFilters, 300)); 
 
    // Modify the sorting event handler to prevent sorting when clicking on filter boxes
 $('th').on('click', function(event) {
@@ -459,15 +525,26 @@ function toggleHighlight() {
 });
 
 $(document).ready(function() {
-    let sortDirection = 'asc';
+    let sortDirection = 'asc';  // Default sort direction
     let sortColumn = '';
 
     function sortTable(column) {
+        const columnIndex = getColumnIndex(column);  // Get the column index using the `getColumnIndex` function
         const rows = $('#jobTableBody tr').get();
         rows.sort(function(a, b) {
-            const aValue = $(a).find(`td[data-column="${column}"]`).text().toLowerCase();
-            const bValue = $(b).find(`td[data-column="${column}"]`).text().toLowerCase();
-
+            let aValue, bValue;
+    
+            // Check if the current column is one of the dropdown columns
+            if (['status', 'impact', 'complexity'].includes(column)) {
+                // If it's a dropdown, get the selected text value for comparison
+                aValue = $(a).find(`td:eq(${columnIndex}) select option:selected`).text().toLowerCase().trim();
+                bValue = $(b).find(`td:eq(${columnIndex}) select option:selected`).text().toLowerCase().trim();
+            } else {
+                // Regular columns, get the text value directly
+                aValue = $(a).find(`td:eq(${columnIndex})`).text().toLowerCase().trim();
+                bValue = $(b).find(`td:eq(${columnIndex})`).text().toLowerCase().trim();
+            }
+    
             if (aValue < bValue) {
                 return sortDirection === 'asc' ? -1 : 1;
             }
@@ -476,36 +553,44 @@ $(document).ready(function() {
             }
             return 0;
         });
-
+    
         $.each(rows, function(index, row) {
             $('#jobTableBody').append(row);
         });
-
+    
+        // Toggle sort direction
         sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
     }
-
+    
+    
+    
+    
     $('th').on('click', function(e) {
         if ($(e.target).is('input')) return;  // Ignore clicks on filter input boxes
-
-        const column = $(this).data('column');
+    
+        const column = $(this).data('column');  // Use the data attribute to get the column name
         if (!column) return;
-
+    
         // Remove sort classes from all headers
         $('th').removeClass('sorted sort-asc sort-desc');
-
+    
         // Set the current column and direction
         if (sortColumn !== column) {
             sortDirection = 'asc';  // Reset to ascending if a new column is clicked
         }
         sortColumn = column;
-
-        // Sort the table
+    
+        // Sort the table using the updated function
         sortTable(column);
-
+    
         // Add the appropriate class to show the sorting direction
         $(this).addClass(`sorted sort-${sortDirection}`);
     });
+    
+    
+    
 });
+
 $(document).ready(function() {
     // Add click event listener to the download button
     $('#downloadCsvButton').on('click', function() {
