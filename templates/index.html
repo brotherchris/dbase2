@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Ownership Tracking</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/style.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/js/app.js"></script>
+
+</head>
+<body>
+    <h1>Job Ownership Tracking</h1>
+<!-- Download Button in the Top Right Corner -->
+<div style="text-align: right; margin: 10px;">
+    <button id="downloadCsvButton" class="export-btn">Download CSV</button>
+</div>
+    <!-- Company Selection -->
+    <div class="company-filter">
+        <label for="companySelect">Filter by Company:</label>
+        <select id="companySelect">
+            <option value="">All Companies</option>
+        </select>
+        <!-- Toast Notification -->
+        <div id="updateToast" class="toast">Update Complete!</div>
+        <div class="mass-update">
+            <label for="massUpdateField">Select Field to Update:</label>
+            <select id="massUpdateField">
+                <option value="job_owner">Job Owner Email</option>
+                <option value="troux_name">Associated Application Name (Troux Name)</option>
+                <option value="troux_id">Troux ID</option>
+                <option value="remarks">Comments</option>
+                <option value="sign_off_name">Name of Person Signing Off</option>
+                <option value="target_week">Target Migration Week</option>
+            </select>
+            <label for="massUpdateValue">New Value:</label>
+            <input type="text" id="massUpdateValue" placeholder="Enter new value">
+            <button id="massUpdateButton">Apply to Selected</button>
+        </div>
+    </div>
+
+    <!-- Table for displaying jobs -->
+    <table>
+        <thead>
+            <tr>
+                <th><input type="checkbox" id="selectAll"></th>
+                <th data-column="job">Job Name <span class="sort-icon">⇅</span><input type="text" id="filterJobName" placeholder="Filter Job Name"></th>
+                <th data-column="esp_app_name">ESP Application Name <span class="sort-icon">⇅</span><input type="text" id="filterESPAppName" placeholder="Filter ESP App Name"></th>
+                <th data-column="last_run">Last Run Date <span class="sort-icon">⇅</span><input type="text" id="filterLastRun" placeholder="Filter Last Run"></th>
+                <th data-column="prefix">Prefix <span class="sort-icon">⇅</span><input type="text" id="filterPrefix" placeholder="Filter Prefix"></th>
+                <th data-column="type">Type <span class="sort-icon">⇅</span><input type="text" id="filterType" placeholder="Filter Type"></th>
+                <th data-column="remedy_support_group">Remedy Support Group <span class="sort-icon">⇅</span><input type="text" id="filterRemedyGroup" placeholder="Filter Remedy Group"></th>
+                <th data-column="snow_support_group">ServiceNow Support Group <span class="sort-icon">⇅</span><input type="text" id="filterSnowGroup" placeholder="Filter Snow Group"></th>
+                <th data-column="snow_support_group_mgr">ServiceNow Support Group Manager <span class="sort-icon">⇅</span><input type="text" id="filterSnowMgr" placeholder="Filter Snow Mgr"></th>
+                <th data-column="support_market">Support Market <span class="sort-icon">⇅</span><input type="text" id="filterMarket" placeholder="Filter Market"></th>
+                <th data-column="app_name">Application <span class="sort-icon">⇅</span><input type="text" id="filterAppName" placeholder="Filter Application"></th>
+                <th data-column="ldap_group">LDAP Group <span class="sort-icon">⇅</span><input type="text" id="filterLDAP" placeholder="Filter LDAP"></th>
+                <th data-column="env">Market <span class="sort-icon">⇅</span><input type="text" id="filterEnv" placeholder="Filter Market"></th>
+                <th data-column="purpose">Purpose <span class="sort-icon">⇅</span><input type="text" id="filterPurpose" placeholder="Filter Purpose"></th>
+                <th data-column="job_owner">Job Owner Email <span class="sort-icon">⇅</span><input type="text" id="filterJobOwner" placeholder="Filter Job Owner"></th>
+                <th data-column="troux_name">Associated Application Name (Troux Name) <span class="sort-icon">⇅</span><input type="text" id="filterTrouxName" placeholder="Filter Associated App"></th>
+                <th data-column="troux_id">Troux ID <span class="sort-icon">⇅</span><input type="text" id="filterTrouxId" placeholder="Filter Troux ID"></th>
+                <th data-column="status">Job Status <span class="sort-icon">⇅</span><input type="text" id="filterStatus" placeholder="Filter Job Status"></th>
+                <th data-column="impact">Business Impact <span class="sort-icon">⇅</span><input type="text" id="filterImpact" placeholder="Filter Impact"></th>
+                <th data-column="complexity">Job Complexity <span class="sort-icon">⇅</span><input type="text" id="filterComplexity" placeholder="Filter Complexity"></th>
+                <th data-column="remarks">Comments <span class="sort-icon">⇅</span><input type="text" id="filterRemarks" placeholder="Filter Comments"></th>
+                <th data-column="sign_off_name">Name of Person Signing Off <span class="sort-icon">⇅</span><input type="text" id="filterSignOffName" placeholder="Filter Sign Off"></th>
+                <th data-column="sign_off_date">Sign-off Date <span class="sort-icon">⇅</span><input type="text" id="filterSignOffDate" placeholder="Filter Sign-off Date"></th>
+                <th data-column="target_week">Target Migration Week <span class="sort-icon">⇅</span><input type="text" id="filterTargetWeek" placeholder="Filter Target Week"></th>
+            </tr>
+        </thead>
+        
+
+        <tbody id="jobTableBody">
+            <!-- Job rows will be appended here via JavaScript -->
+        </tbody>
+    </table>
+
+    <!-- Footer for displaying row count -->
+    <div id="footer" class="footer">
+        Total Jobs: <span id="rowCount">0</span>
+    </div>
+
+
+    
+</body>
+</html>

@@ -1,0 +1,296 @@
+/* General Page Styling */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f7fc; /* Soft background for a modern look */
+}
+
+/* Header Styling */
+h1 {
+    color: #0118a7; /* Dark Blue Header */
+    text-align: center;
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+/* Table Styling */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: white; /* Clean table background */
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+th, td {
+    padding: 15px;
+    text-align: left;
+    border: 1px solid #ddd; /* Light border */
+}
+
+th {
+    background-color: #020e5a; /* Dark blue for table headers */
+    color: white;
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+}
+
+td {
+    background-color: #f9f9f9; /* Light gray background for data rows */
+    color: #333;
+    font-size: 1rem;
+}
+
+td[contenteditable="true"] {
+    background-color: #fffbea; /* Light yellow for editable cells */
+    border: 1px dashed #f39c12; /* Highlight editable cells */
+    cursor: text;
+}
+
+td[contenteditable="false"] {
+    background-color: #eaeaea; /* Light gray for non-editable cells */
+}
+
+/* Hover effect for rows */
+tbody tr:hover {
+    background-color: #eef4ff; /* Light blue on hover */
+}
+
+/* Form Styling */
+label {
+    font-weight: bold;
+    color: #0118a7; /* Matching form labels with header color */
+}
+
+input, select {
+    padding: 10px;
+    margin: 0 10px 10px 0;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+input:focus, select:focus {
+    border-color: #0118a7; /* Focus border effect */
+    outline: none;
+}
+
+/* Button Styling */
+button {
+    padding: 10px 20px;
+    background-color: #28a745; /* Green background for action buttons */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #218838; /* Darker green on hover */
+    transform: translateY(-2px); /* Lift effect on hover */
+}
+
+button:active {
+    background-color: #1e7e34; /* Even darker green when active */
+}
+
+/* Toast Notification */
+#updateToast {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    background-color: #28a745; /* Green for success notifications */
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1rem;
+    z-index: 9999;
+    display: none;
+    box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#updateToast.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Checkbox Styling */
+input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Highlight class for selected rows */
+.highlight {
+    background-color: #4e7ed6 !important; /* Light blue background for highlighted rows */
+}
+
+/* Mass update and filter section */
+.mass-update, .company-filter {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: white;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive styling */
+@media (max-width: 768px) {
+    th, td {
+        font-size: 14px;
+        padding: 8px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    .mass-update, .company-filter {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .mass-update input, .company-filter select {
+        width: 100%;
+    }
+}
+
+
+
+
+
+
+/* Container for the table */
+.table-container {
+    overflow-x: auto; /* Allow horizontal scrolling in the table body */
+    max-height: 500px; /* Set a max height if needed */
+    overflow-y: auto; /* Allow vertical scrolling */
+    width: 100%; /* Ensure full width for the container */
+}
+
+/* Make the first two columns sticky (only for the table body, not the header) */
+td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background-color: rgb(217, 236, 248); /* Ensure background matches */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+td:nth-child(2) {
+    position: sticky;
+    left: 65px; /* Adjust based on the actual width of the first column */
+    z-index: 2;
+    background-color: rgb(217, 236, 248); /* Ensure background matches */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+/* Make the table header sticky */
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 3; /* Ensure header stays above the table body */
+    background-color: #1b03a0; /* Set header background color */
+    color: white; /* Set text color */
+    padding: 10px;
+    text-align: left;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Optional shadow for depth */
+}
+
+/* Hover effect for better readability */
+tbody tr:hover {
+    background-color: #eef4ff; /* Light blue on hover */
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px;
+    font-size: 14px;
+    z-index: 1000;
+}
+
+#rowCount {
+    font-weight: bold;
+}
+
+/* Button Styling */
+.export-btn {
+    padding: 10px 20px;
+    background-color: #007bff; /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.export-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.export-btn:active {
+    background-color: #004085; /* Even darker blue when active */
+}
+
+/* Style for the sort icon in the headers */
+.sort-icon {
+    margin-left: 5px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #6c757d; /* Default gray color */
+    display: inline-block;
+}
+
+/* Highlight the active sorted column */
+th.sorted {
+    background-color: #466ff7;
+}
+
+/* Sort icon for ascending */
+.sort-asc:after {
+    content: "▲"; /* Up arrow */
+    margin-left: 5px;
+}
+
+/* Sort icon for descending */
+.sort-desc:after {
+    content: "▼"; /* Down arrow */
+    margin-left: 5px;
+}
+/* Style for the CSV Download Button */
+.export-btn {
+    padding: 10px 20px;
+    background-color: #007bff; /* Blue background */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.export-btn:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
+.export-btn:active {
+    background-color: #004085; /* Even darker blue when active */
+}
