@@ -294,3 +294,31 @@ th.sorted {
 .export-btn:active {
     background-color: #004085; /* Even darker blue when active */
 }
+/* Toastify notification with progress bar */
+.info-with-progress {
+    position: relative;
+    overflow: hidden;
+}
+
+.info-with-progress::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 5px;  /* Height of the progress bar */
+    background: #ffdd57;  /* Color of the progress bar */
+    animation: progressBarAnimation 15s linear forwards;  /* Animation duration matches the timer */
+}
+
+/* Keyframes for the progress bar animation */
+@keyframes progressBarAnimation {
+    from { width: 100%; }
+    to { width: 0%; }
+}
+
+/* Ensure all Toastify notifications are positioned on the right */
+.toastify-right {
+    right: 20px !important;  /* Force the right position */
+    left: auto !important;  /* Override any left positioning */
+}
+

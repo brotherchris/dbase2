@@ -250,24 +250,35 @@ def mass_update():
     new_value = data.get('value')
     selected_ids = data.get('selected_ids')
 
-    print(f"Debug: Mass update - Field: {field}, New Value: {new_value}, Selected IDs: {selected_ids}")  # Debug print
+    # Debug prints for incoming request data
+    print(f"Debug: Mass update requested - Field: {field}, New Value: {new_value}, Selected IDs: {selected_ids}")
 
+    # Check for missing data
     if not field or not new_value or not selected_ids:
+        print("Debug: Missing field, value, or selected IDs in the request.")
         return jsonify({'error': 'Missing data'}), 400
 
+    # Fetch the jobs matching the selected IDs
     jobs = Job.query.filter(Job.id.in_(selected_ids)).all()
     if not jobs:
         print(f"Debug: No matching jobs found for IDs: {selected_ids}")
         return jsonify({'error': 'No matching jobs found'}), 404
 
+    print(f"Debug: Retrieved {len(jobs)} jobs for update.")
+
+    # Update each job with the new value for the specified field
     for job in jobs:
+        print(f"Debug: Current Job ID {job.id} - {field} Before Update: {getattr(job, field, 'Field not found')}")
+
         if field == 'sign_off_name':
             job.sign_off_name = new_value
             job.sign_off_date = datetime.now() if new_value else None
             print(f"Debug: Updating Job ID {job.id} - sign_off_name: {new_value}, sign_off_date: {job.sign_off_date}")
         else:
             setattr(job, field, new_value)
+            print(f"Debug: Updated Job ID {job.id} - {field}: {new_value}")
 
+    # Commit the updates to the database and handle errors
     try:
         db.session.commit()
         print(f"Debug: Mass update successful for Job IDs: {selected_ids}")
@@ -281,30 +292,35 @@ def mass_update():
 
 @app.route('/api/undo_mass_update', methods=['POST'])
 def undo_mass_update():
+    data = request.get_json()
+    print(f"Received data for undo: {data}")
+
+    previous_values = data.get('previous_values', [])
+    print(f"Previous values to restore: {previous_values}")
+
+    if not previous_values:
+        print("No data to undo received in the request.")
+        return jsonify(success=False, message="No data to undo"), 400
+
     try:
-        original_data = request.json
+        # Start a transaction using SQLAlchemy session
+        for value in previous_values:
+            print(f"Restoring Job ID: {value['id']} - Column: {value['column']} - Previous Value: {value['previousValue']}")
 
-        for item in original_data:
-            job_id = item.get('job_id')
-            field = item.get('field')
-            original_value = item.get('original_value')
-
-            # Get the job by ID
-            job = Job.query.get(job_id)
-            if not job:
-                return jsonify({'error': f'Job with ID {job_id} not found'}), 404
-
-            # Revert the field to the original value
-            setattr(job, field, original_value)
-
-        # Commit changes to the database
+            # Construct and execute the update query using SQLAlchemy with `text`
+            query = text(f"UPDATE jobs SET {value['column']} = :previous_value WHERE id = :job_id")
+            db.session.execute(query, {"previous_value": value['previousValue'], "job_id": value['id']})
+        
+        # Commit the changes to the database
         db.session.commit()
-
-        return jsonify({'success': True}), 200
-
+        print("Undo operation completed successfully!")
+        return jsonify(success=True)
     except Exception as e:
-        db.session.rollback()  # Rollback in case of any error
-        return jsonify({'error': str(e)}), 400
+        print(f"Error in undo_mass_update: {str(e)}")
+        db.session.rollback()  # Rollback the transaction in case of an error
+        return jsonify(success=False, message=str(e)), 500
+
+
     
 # Route to get distinct company names for the company filter
 @app.route('/api/companies', methods=['GET'])

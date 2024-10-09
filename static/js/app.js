@@ -38,9 +38,9 @@ $(document).ready(function() {
 
 // Define dropdown options for specific columns
 const dropdownOptions = {
-    'job_status': ['Active', 'Inactive'],
-    'business_impact': ['Low', 'Medium', 'High'],
-    'job_complexity': ['Low', 'Medium', 'High']
+    'status': ['Active', 'Inactive'],
+    'impact': ['Low', 'Medium', 'High'],
+    'complexity': ['Low', 'Medium', 'High']
 };
 
 
@@ -81,20 +81,21 @@ function loadJobs(page = 1, company = '') {
                     <td contenteditable="true" data-column="troux_name" data-id="${job.id}">${job.troux_name}</td>
                     <td contenteditable="true" data-column="troux_id" data-id="${job.id}">${job.troux_id}</td>
                     <td>
-                        <select class="dropdown" contenteditable="true" data-column="status" data-id="${job.id}">
-                            ${dropdownOptions['job_status'].map(option => `<option value="${option}" ${option === job.status ? 'selected' : ''}>${option}</option>`).join('')}
-                        </select>
+                       <select class="dropdown" data-column="status" data-id="${job.id}">
+                           ${dropdownOptions['status'].map(option => `<option value="${option}" ${option === job.status ? 'selected' : ''}>${option}</option>`).join('')}
+                       </select>
                     </td>
                     <td>
-                        <select class="dropdown" contenteditable="true" data-column="impact" data-id="${job.id}">
-                            ${dropdownOptions['business_impact'].map(option => `<option value="${option}" ${option === job.impact ? 'selected' : ''}>${option}</option>`).join('')}
-                        </select>
+                       <select class="dropdown" data-column="impact" data-id="${job.id}">
+                           ${dropdownOptions['impact'].map(option => `<option value="${option}" ${option === job.impact ? 'selected' : ''}>${option}</option>`).join('')}
+                       </select>
                     </td>
                     <td>
-                        <select class="dropdown" contenteditable="true" data-column="complexity" data-id="${job.id}">
-                            ${dropdownOptions['job_complexity'].map(option => `<option value="${option}" ${option === job.complexity ? 'selected' : ''}>${option}</option>`).join('')}
-                        </select>
+                       <select class="dropdown" data-column="complexity" data-id="${job.id}">
+                           ${dropdownOptions['complexity'].map(option => `<option value="${option}" ${option === job.complexity ? 'selected' : ''}>${option}</option>`).join('')}
+                       </select>
                     </td>
+
                     <td contenteditable="true" data-column="remarks" data-id="${job.id}">${job.remarks}</td>
                     <td contenteditable="true" data-column="sign_off_name" data-id="${job.id}">${job.sign_off_name}</td>
                     <td>${job.sign_off_date}</td>
@@ -372,112 +373,188 @@ $('#jobTableBody').on('blur', '[contenteditable="true"], select', function() {
     });
 });
 
+const massUpdateDropdownOptions = {
+    'status': ['Active', 'Inactive'],
+    'impact': ['Low', 'Medium', 'High'],
+    'complexity': ['Low', 'Medium', 'High']
+};
 
-$('#massUpdateButton').on('click', function() {
+$('#massUpdateField').on('change', function() {
+    const selectedField = $(this).val();
+
+    // Check if the selected field requires a dropdown
+    if (massUpdateDropdownOptions[selectedField]) {
+        // Create a dropdown select element with the corresponding options
+        const dropdown = $('<select id="massUpdateValue"></select>');
+        massUpdateDropdownOptions[selectedField].forEach(option => {
+            dropdown.append(`<option value="${option}">${option}</option>`);
+        });
+        $('#massUpdateValue').replaceWith(dropdown);  // Replace the input field with the dropdown
+    } else {
+        // If not a dropdown field, show a regular input box
+        const input = $('<input type="text" id="massUpdateValue" placeholder="Enter new value">');
+        $('#massUpdateValue').replaceWith(input);  // Replace with a text input
+    }
+});
+
+let previousValues = [];  // To store the previous state of the selected rows
+let undoTimer;  // Timer for the 15-second countdown
+const UNDO_TIMEOUT = 15000;  // 15 seconds
+
+$('#massUpdateButton').on('click', function () {
     const field = $('#massUpdateField').val();
     const newValue = $('#massUpdateValue').val();
-    const selectedIds = $('.rowCheckbox:checked').map(function() {
+    const selectedIds = $('.rowCheckbox:checked').map(function () {
         return $(this).data('id');
     }).get();
-
-    // Store original values before the update for potential undo
-    const originalData = [];
-    selectedIds.forEach(jobId => {
-        const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
-        const originalValue = cell.is('select') ? cell.find('option:selected').text() : cell.text();
-        originalData.push({ job_id: jobId, field: field, original_value: originalValue });
-    });
 
     if (selectedIds.length === 0) {
         alert('Please select at least one row to update.');
         return;
     }
 
+    // Store previous values for undo
+    previousValues = selectedIds.map(jobId => {
+        const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
+        const selectElement = cell.find('select');
+        const previousValue = selectElement.length > 0 ? selectElement.val() : cell.text().trim();
+        console.log(`Storing previous value for Job ID: ${jobId} - Column: ${field} - Value: ${previousValue}`);
+        
+        return {
+            id: jobId,
+            column: field,
+            previousValue: previousValue
+        };
+    });
+
+    console.log("Previous values stored for undo:", previousValues);  // Debugging statement
+
+    // Perform the mass update
     $.ajax({
         url: '/api/mass_update',
         method: 'POST',
         contentType: 'application/json',
         data: JSON.stringify({ field: field, value: newValue, selected_ids: selectedIds }),
-        success: function(response) {
-            let undoTimeout;  // Variable to hold the undo timer
+        success: function (response) {
+            if (response.success) {
+                console.log('Mass update successful!');
 
-            Toastify({
-                text: "Mass update successful! Click to undo.",
-                duration: 15000,  // 15-second notification
-                close: true,
-                gravity: "top",
-                position: "right",
-                style: {
-                    background: "linear-gradient(to right, #00b09b, #96c93d)",
-                },
-                onClick: function() {
-                    clearTimeout(undoTimeout);  // Cancel the timeout if user clicks undo
+                // Apply changes visually on the frontend
+                selectedIds.forEach(jobId => {
+                    const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
+                    const selectElement = cell.find('select');
+                    if (selectElement.length > 0) {
+                        selectElement.val(newValue).change();
+                    } else {
+                        cell.text(newValue);
+                    }
+                });
 
-                    $.ajax({
-                        url: '/api/undo_mass_update',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(originalData),
-                        success: function() {
-                            Toastify({
-                                text: "Mass update undone!",
-                                duration: 3000,
-                                close: true,
-                                gravity: "top",
-                                position: "right",
-                                style: {
-                                    background: "linear-gradient(to right, #f44336, #ff7961)",  // Red for undo confirmation
-                                },
-                            }).showToast();
+                // Generate a unique ID for the undo button
+                const uniqueUndoId = `undoToastButton-${new Date().getTime()}`;
 
-                            // Restore the table values based on original data
-                            originalData.forEach(data => {
-                                const cell = $(`td[data-column="${data.field}"][data-id="${data.job_id}"]`);
-                                cell.text(data.original_value);
-                            });
-                        },
-                        error: function() {
-                            alert('Failed to undo the mass update.');
-                        }
-                    });
-                }
-            }).showToast();
-
-            // Start a 15-second timer for automatic finalization
-            undoTimeout = setTimeout(function() {
-                Toastify({
-                    text: "Mass update finalized.",
-                    duration: 3000,
+                const toastInstance = Toastify({
+                    text: `Mass update successful! <button id="${uniqueUndoId}" style="background:none;border:none;color:#0000EE;text-decoration:underline;cursor:pointer;">Undo</button>`,
+                    duration: UNDO_TIMEOUT,
                     close: true,
                     gravity: "top",
-                    position: "right",
-                    style: {
-                        background: "linear-gradient(to right, #00796b, #004d40)",  // Confirm color
-                    },
+                    position: "right",  // Set the position to right
+                    escapeMarkup: false,
+                    className: "info-with-progress toastify-right",  // Include custom class to force right alignment
+                    style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
+                    stopOnFocus: true,
                 }).showToast();
-            }, 15000);
+                
 
-            // Update the table with the new values
-            selectedIds.forEach(jobId => {
-                const cell = $(`td[data-column="${field}"][data-id="${jobId}"]`);
-                if (cell.is('select')) {
-                    cell.val(newValue);
-                } else {
-                    cell.text(newValue);
-                }
+                // Ensure the button is rendered and attach the event listener
+                setTimeout(() => {
+                    const undoButton = document.getElementById(uniqueUndoId);
+                    if (undoButton) {
+                        console.log(`Attaching click listener to #${uniqueUndoId}`);
+                        undoButton.addEventListener('click', function () {
+                            console.log("Undo button clicked! Triggering undoMassUpdate...");
+                            toastInstance.hideToast();  // Clear the mass update notification immediately
+                            undoMassUpdate();  // Trigger the undo function
+                        });
+                    } else {
+                        console.error(`Undo button with ID #${uniqueUndoId} not found!`);
+                    }
+                }, 500);  // Adjust the timeout duration if needed
 
-                // Update sign-off date if sign-off name was changed
-                if (field === 'sign_off_name') {
-                    $(`td[data-column="sign_off_date"][data-id="${jobId}"]`).text(new Date().toLocaleDateString());
-                }
-            });
+                // Start the countdown timer for 15 seconds
+                undoTimer = setTimeout(() => {
+                    console.log('Undo period expired. Reloading data...');
+                    // Reload the filtered data after timeout
+                    const selectedCompany = $('#companySelect').val();
+                    $('#jobTableBody').empty();  // Clear existing rows
+                    loadJobs(1, selectedCompany);  // Reload filtered data
+                }, UNDO_TIMEOUT);
+            } else {
+                alert('Mass update failed. Please check the server logs.');
+            }
         },
-        error: function(error) {
-            console.error('Error during mass update:', error);
+        error: function (error) {
             alert('Error during mass update. Please try again.');
         }
     });
 });
+
+
+
+
+function undoMassUpdate() {
+    console.log("Undo function triggered successfully!");  // Verify if the function is called
+    console.log("Current previousValues:", previousValues);  // Debugging statement
+
+    if (previousValues.length === 0) {
+        console.log("No previous values found. Exiting undo function.");
+        return;
+    }
+
+    // Perform the undo operation
+    $.ajax({
+        url: '/api/undo_mass_update',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ previous_values: previousValues }),
+        success: function (response) {
+            if (response.success) {
+                // Revert values in the frontend
+                previousValues.forEach(({ id, column, previousValue }) => {
+                    const cell = $(`td[data-column="${column}"][data-id="${id}"]`);
+                    const selectElement = cell.find('select');
+
+                    if (selectElement.length > 0) {
+                        selectElement.val(previousValue).change();
+                    } else {
+                        cell.text(previousValue);
+                    }
+                });
+
+                console.log("Undo operation successful. Clearing previousValues...");
+                previousValues = [];  // Clear the stored state after successful undo
+                clearTimeout(undoTimer);
+
+                // Show success notification
+                Toastify({
+                    text: "Undo successful!",
+                    duration: 3000,
+                    close: true,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "#dc3545" },
+                }).showToast();
+            } else {
+                alert('Undo failed. Please check the server logs.');
+            }
+        },
+        error: function (error) {
+            alert('Error during undo. Please try again.');
+        }
+    });
+}
+
+
 
 
 // Select All Functionality
